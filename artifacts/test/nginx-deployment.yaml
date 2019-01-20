@@ -9,10 +9,12 @@ spec:
   selector:
     matchLabels:
       app: nginx
+      eurek8s: "true"
   template:
     metadata:
       labels:
         app: nginx
+        eurek8s: "true"
     spec:
       containers:
       - name: nginx
