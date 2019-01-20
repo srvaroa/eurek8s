@@ -12,9 +12,6 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-// Controller struct defines how a controller should encapsulate
-// logging, client connectivity, informing (list and watching)
-// queueing, and handling of resource changes
 type Controller struct {
 	logger    *log.Entry
 	clientset kubernetes.Interface
@@ -23,7 +20,6 @@ type Controller struct {
 	handler   Handler
 }
 
-// Run is the main path of execution for the controller loop
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	// handle a panic with logging and exiting
 	defer utilruntime.HandleCrash()
@@ -72,14 +68,7 @@ func (c *Controller) runWorker() {
 func (c *Controller) processNextItem() bool {
 	log.Info("Controller.processNextItem: start")
 
-	// fetch the next item (blocking) from the queue to process or
-	// if a shutdown is requested then return out of this to stop
-	// processing
 	key, quit := c.queue.Get()
-
-	// stop the worker loop from running as this indicates we
-	// have sent a shutdown message that the queue has indicated
-	// from the Get method
 	if quit {
 		return false
 	}
