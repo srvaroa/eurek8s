@@ -8,7 +8,7 @@ import (
 	"github.com/srvaroa/eurek8s/pkg/controller"
 
 	log "github.com/Sirupsen/logrus"
-	apps_v1 "k8s.io/api/apps/v1"
+	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,14 +45,14 @@ func main() {
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
 				options.LabelSelector = labelSel.String()
-				return client.AppsV1().Deployments(meta_v1.NamespaceDefault).List(options)
+				return client.CoreV1().Pods(meta_v1.NamespaceDefault).List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				options.LabelSelector = labelSel.String()
-				return client.AppsV1().Deployments(meta_v1.NamespaceDefault).Watch(options)
+				return client.CoreV1().Pods(meta_v1.NamespaceDefault).Watch(options)
 			},
 		},
-		&apps_v1.Deployment{},
+		&api_v1.Pod{},
 		0,
 		cache.Indexers{},
 	)
