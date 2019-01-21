@@ -43,6 +43,10 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 
 	c.logger.Info("Controller.Run: initiating")
 
+	c.handler.Init()
+
+	c.logger.Info("Handler is ready..")
+
 	// run the informer to start listing and watching resources
 	go c.informer.Run(stopCh)
 

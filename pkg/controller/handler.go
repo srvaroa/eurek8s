@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/hudl/fargo"
 	apps_v1 "k8s.io/api/apps/v1"
 )
 
@@ -13,30 +16,46 @@ type Handler interface {
 	ObjectUpdated(objOld, objNew interface{})
 }
 
-// TestHandler is a sample implementation of Handler
-type TestHandler struct{}
+type EurekaSyncer struct {
+	eureka fargo.EurekaConnection
+}
 
 // Init handles any handler initialization
-func (t *TestHandler) Init() error {
-	log.Info("TestHandler.Init")
+func (e *EurekaSyncer) Init() error {
+	log.Info("EurekaSyncer.Init")
+	e.eureka = fargo.NewConn("http://127.0.0.1:8080/eureka/v2")
 	return nil
 }
 
-// ObjectCreated is called when an object is created
-func (t *TestHandler) ObjectCreated(obj interface{}) {
-	log.Info("TestHandler.ObjectCreated")
-	// assert the type to a Deployment object to pull out relevant data
+func (e *EurekaSyncer) ObjectCreated(obj interface{}) {
+	log.Info("EurekaSyncer.ObjectCreated")
+	// assert the type to a Deploymen  object to pull out relevant data
 	deployment := obj.(*apps_v1.Deployment)
 	log.Infof("    ResourceVersion: %s", deployment.ObjectMeta.ResourceVersion)
-	log.Infof("    Replicas: %d", *deployment.Spec.Replicas)
+	log.Infof("    Replicas: %d", deployment.Status.ReadyReplicas)
+
+	instance := &fargo.Instance{
+		UniqueID: func(i fargo.Instance) string {
+			return fmt.Sprintf("%s:%s", "192.168.1.1", "asdfas")
+		},
+		App:              deployment.Name,
+		HostName:         "host",
+		IPAddr:           "192.168.1.1",
+		VipAddress:       "192.168.1.1",
+		SecureVipAddress: "192.168.1.1",
+		Status:           fargo.UP,
+		Port:             8080,
+		DataCenterInfo:   fargo.DataCenterInfo{Name: fargo.MyOwn},
+	}
+	// log.Infof("Registering instance", instance)
+	e.eureka.RegisterInstance(instance)
+
 }
 
-// ObjectDeleted is called when an object is deleted
-func (t *TestHandler) ObjectDeleted(obj interface{}) {
-	log.Info("TestHandler.ObjectDeleted")
+func (e *EurekaSyncer) ObjectDeleted(obj interface{}) {
+	log.Info("EurekaSyncer.ObjectDeleted")
 }
 
-// ObjectUpdated is called when an object is updated
-func (t *TestHandler) ObjectUpdated(objOld, objNew interface{}) {
-	log.Info("TestHandler.ObjectUpdated")
+func (e *EurekaSyncer) ObjectUpdated(objOld, objNew interface{}) {
+	log.Info("EurekaSyncer.ObjectUpdated")
 }

@@ -95,7 +95,7 @@ func main() {
 		client,
 		queue,
 		informer,
-		&controller.TestHandler{},
+		&controller.EurekaSyncer{},
 	)
 
 	stopCh := make(chan struct{})
