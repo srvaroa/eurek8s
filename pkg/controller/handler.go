@@ -9,9 +9,9 @@ import (
 // Handler interface contains the methods that are required
 type Handler interface {
 	Init() error
-	ObjectCreated(obj interface{})
-	ObjectDeleted(obj interface{})
-	ObjectUpdated(objOld, objNew interface{})
+	ObjectCreated(keyRaw string, obj interface{})
+	ObjectDeleted(keyRaw string, obj interface{})
+	ObjectUpdated(keyRaw string, objOld, objNew interface{})
 }
 
 type EurekaSyncer struct {
@@ -25,25 +25,25 @@ func (e *EurekaSyncer) Init() error {
 	return nil
 }
 
-func (e *EurekaSyncer) ObjectCreated(obj interface{}) {
+func (e *EurekaSyncer) ObjectCreated(keyRaw string, obj interface{}) {
 	log.Info("EurekaSyncer.ObjectCreated")
-	e.reconcile(obj.(*core_v1.Pod))
+	e.reconcile(obj)
 }
 
-func (e *EurekaSyncer) ObjectDeleted(obj interface{}) {
+func (e *EurekaSyncer) ObjectDeleted(keyRaw string, obj interface{}) {
 	log.Info("EurekaSyncer.ObjectDeleted")
-	// e.reconcile(obj.(*core_v1.Pod))
+	e.reconcile(obj)
 }
 
-func (e *EurekaSyncer) ObjectUpdated(objOld, objNew interface{}) {
+func (e *EurekaSyncer) ObjectUpdated(keyRaw string, objOld, objNew interface{}) {
 	log.Info("EurekaSyncer.ObjectUpdated")
-	if objNew != nil {
-		e.reconcile(objNew.(*core_v1.Pod))
-	}
+	e.reconcile(objNew)
 }
 
-func (e *EurekaSyncer) reconcile(pod *core_v1.Pod) {
+func (e *EurekaSyncer) reconcile(obj interface{}) {
+	pod := obj.(*core_v1.Pod)
 	if pod.Status.Phase == "Running" {
+
 		instance := &fargo.Instance{
 			UniqueID: func(i fargo.Instance) string {
 				return pod.Name
