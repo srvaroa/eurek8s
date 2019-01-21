@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	api_v1 "k8s.io/api/core/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,14 +43,14 @@ func main() {
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
 				options.LabelSelector = labelSel.String()
-				return client.CoreV1().Pods(meta_v1.NamespaceDefault).List(options)
+				return client.AppsV1().Deployments(meta_v1.NamespaceDefault).List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				options.LabelSelector = labelSel.String()
-				return client.CoreV1().Pods(meta_v1.NamespaceDefault).Watch(options)
+				return client.AppsV1().Deployments(meta_v1.NamespaceDefault).Watch(options)
 			},
 		},
-		&api_v1.Pod{},
+		&apps_v1.Deployment{},
 		0,
 		cache.Indexers{},
 	)
