@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"fmt"
@@ -18,6 +18,20 @@ type Controller struct {
 	queue     workqueue.RateLimitingInterface
 	informer  cache.SharedIndexInformer
 	handler   Handler
+}
+
+func MakeController(l *log.Entry,
+	c kubernetes.Interface,
+	q workqueue.RateLimitingInterface,
+	i cache.SharedIndexInformer,
+	h Handler) *Controller {
+	return &Controller{
+		logger:    l,
+		clientset: c,
+		queue:     q,
+		informer:  i,
+		handler:   h,
+	}
 }
 
 func (c *Controller) Run(stopCh <-chan struct{}) {

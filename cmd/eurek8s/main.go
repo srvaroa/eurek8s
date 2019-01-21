@@ -5,6 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/srvaroa/eurek8s/pkg/controller"
+
 	log "github.com/Sirupsen/logrus"
 	apps_v1 "k8s.io/api/apps/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,13 +90,13 @@ func main() {
 		},
 	})
 
-	controller := Controller{
-		logger:    log.NewEntry(log.New()),
-		clientset: client,
-		informer:  informer,
-		queue:     queue,
-		handler:   &TestHandler{},
-	}
+	controller := controller.MakeController(
+		log.NewEntry(log.New()),
+		client,
+		queue,
+		informer,
+		&controller.TestHandler{},
+	)
 
 	stopCh := make(chan struct{})
 	defer close(stopCh)
