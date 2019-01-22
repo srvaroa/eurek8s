@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -57,14 +58,14 @@ func (e *EurekaSyncer) reconcile(keyRaw string, obj interface{}) {
 		log.Infof("Instance running %s", keyRaw)
 		e.liveChan <- &fargo.Instance{
 			UniqueID: func(i fargo.Instance) string {
-				return keyRaw
+				return pod.Name
 			},
 			App:      pod.Labels["app"],
-			HostName: "host",
+			HostName: pod.Name,
 			// TODO: set the service DNS here (can we? Or a VIP?)
-			IPAddr:           "192.168.1.1",
-			VipAddress:       "192.168.1.1",
-			SecureVipAddress: "192.168.1.1",
+			IPAddr:           pod.Status.PodIP,
+			VipAddress:       pod.Status.PodIP,
+			SecureVipAddress: pod.Status.PodIP,
 			Status:           fargo.UP,
 			Port:             8080,
 			DataCenterInfo:   fargo.DataCenterInfo{Name: fargo.MyOwn},
@@ -83,16 +84,21 @@ func (e *EurekaSyncer) beat() {
 		case _ = <-tickChan:
 			log.Infof("Tick %d", len(instances))
 			for _, i := range instances {
+				log.Infof("Heartbeat for %s: %s", i.HostName, i.IPAddr)
 				e.eureka.RegisterInstance(i)
 			}
 		case i := <-e.liveChan:
-			log.Infof("Live %s", i.UniqueID(*i))
 			key := i.UniqueID(*i)
+			log.Infof("Live %s", key)
 			instances[key] = i
 			e.eureka.RegisterInstance(i)
 		case key := <-e.deadChan:
 			log.Infof("Dead %s", key)
-			i := instances[key]
+			// The key is in the form $namespace/$pod_name, and it looks
+			// like Eureka isn't able to handle / in the instance id.
+			// It's either this, or s/\//_/ in the registration (which
+			// maybe looks cleaner.  Reconsider sometime.)
+			i := instances[strings.Split(key, "/")[1]]
 			if i != nil {
 				e.eureka.DeregisterInstance(i)
 			}
