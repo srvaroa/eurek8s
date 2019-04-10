@@ -8,7 +8,7 @@ import (
 	"github.com/srvaroa/eurek8s/pkg/controller"
 
 	log "github.com/Sirupsen/logrus"
-	api_v1 "k8s.io/api/core/v1"
+	extensions_v1 "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,19 +40,24 @@ func getKubernetesClient() kubernetes.Interface {
 func main() {
 	client := getKubernetesClient()
 
-	labelSel := labels.Set(map[string]string{"eurek8s": "true"}).AsSelector()
+	// labelSel := labels.Set(map[string]string{"eurek8s": "true"}).AsSelector()
+	labelSel, err := labels.Parse("app")
+	if err != nil {
+		log.Info("Unable to create label selector!")
+		return
+	}
 	informer := cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
 				options.LabelSelector = labelSel.String()
-				return client.CoreV1().Pods(meta_v1.NamespaceDefault).List(options)
+				return client.ExtensionsV1beta1().Ingresses(meta_v1.NamespaceDefault).List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				options.LabelSelector = labelSel.String()
-				return client.CoreV1().Pods(meta_v1.NamespaceDefault).Watch(options)
+				return client.ExtensionsV1beta1().Ingresses(meta_v1.NamespaceDefault).Watch(options)
 			},
 		},
-		&api_v1.Pod{},
+		&extensions_v1.Ingress{},
 		0,
 		cache.Indexers{},
 	)

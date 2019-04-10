@@ -6,7 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/hudl/fargo"
-	core_v1 "k8s.io/api/core/v1"
+	extensions_v1 "k8s.io/api/extensions/v1beta1"
 )
 
 // Handler interface contains the methods that are required
@@ -54,27 +54,33 @@ func (e *EurekaSyncer) reconcile(keyRaw string, obj interface{}) {
 		e.deadChan <- keyRaw
 		return
 	}
-	pod := obj.(*core_v1.Pod)
-	if pod.Status.Phase == "Running" {
-		log.Infof("Instance running %s", keyRaw)
-		e.liveChan <- &fargo.Instance{
-			UniqueID: func(i fargo.Instance) string {
-				return pod.Name
-			},
-			App:      pod.Labels["app"],
-			HostName: pod.Name,
-			// TODO: set the service DNS here (can we? Or a VIP?)
-			IPAddr:           pod.Status.PodIP,
-			VipAddress:       pod.Status.PodIP,
-			SecureVipAddress: pod.Status.PodIP,
-			Status:           fargo.UP,
-			Port:             8080,
-			DataCenterInfo:   fargo.DataCenterInfo{Name: fargo.MyOwn},
-		}
+	ing := obj.(*extensions_v1.Ingress)
+	appName := ing.Labels["app"]
+	host := ing.Spec.Rules[0].Host
+	if len(appName) == 0 {
+		// TODO: error? e.deadChan <- keyRaw?
 		return
 	}
+	log.Infof("Ingress found for app: %s, %s %+v", keyRaw, appName, host)
 
-	log.Infof("-> Phase: %+v", pod.Status.Phase)
+	e.liveChan <- &fargo.Instance{
+		UniqueID: func(i fargo.Instance) string {
+			return ing.Name
+		},
+		App:      appName,
+		HostName: ing.Name,
+		// TODO: do we want to set the LB's IP? (I think it can be
+		// pulled from the ingress.Status)
+		IPAddr:           host,
+		VipAddress:       host,
+		SecureVipAddress: host,
+		Status:           fargo.UP,
+		Port:             8080,
+		DataCenterInfo:   fargo.DataCenterInfo{Name: fargo.MyOwn},
+	}
+
+	// log.Infof("-> Status: %+v", ing.Status.LoadBalancer)
+	log.Infof("-> Host: %+v", ing.Spec.Rules[0].Host[0])
 }
 
 func (e *EurekaSyncer) beat() {
