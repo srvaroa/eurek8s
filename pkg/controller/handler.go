@@ -26,6 +26,7 @@ type EurekaSyncer struct {
 // Init handles any handler initialization
 func (e *EurekaSyncer) Init() error {
 	log.Info("EurekaSyncer.Init")
+	// TODO: pass the eureka endpoint via config
 	e.eureka = fargo.NewConn("http://127.0.0.1:8080/eureka/v2")
 	e.liveChan = make(chan *fargo.Instance)
 	e.deadChan = make(chan string)
