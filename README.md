@@ -1,9 +1,11 @@
 # Eurek8s
 
-PoC of a controller that listens for ingresses and syncs corresponding
-ingresses with Eureka.
-
-Started from <https://github.com/trstringer/k8s-controller-core-resource>.
+This is a PoC of a controller that listens for ingresses and syncs them
+to Eureka.  We used it internally at [Adevinta](https://adevinta.com) as
+the basis to create a solution to migrate a fleet of microservices from
+AWS to Kubernetes.  The final version we used in production remains
+private to Adevinta, but [I wrote in depth about what we implemented
+here](https://srvaroa.github.io/kubernetes/eureka/paas/microservices/loadbalancing/2020/02/12/eureka-kubernetes.html)..
 
 ## Running
 
